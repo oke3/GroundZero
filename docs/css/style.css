@@ -636,10 +636,14 @@ body {
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    transition: height 0.5s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.35s ease, box-shadow 0.35s ease, opacity 0.35s ease;
-    animation: fadeUp 0.5s ease both;
+    transition: height 0.5s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.35s ease, box-shadow 0.35s ease;
     overflow: hidden;
     will-change: height;
+}
+
+/* Staggered entrance animation (applied via JS on tab/search changes) */
+.vertical-card.animate-in {
+    animation: fadeUp 0.5s ease both;
 }
 
 .vertical-card:hover {

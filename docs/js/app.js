@@ -4523,6 +4523,8 @@ async function init() {
     }
 
     // ===== Render =====
+    let isInitialRender = true;
+
     function render(filter) {
         const query = (filter || '').toLowerCase();
         const cat = activeCategory;
@@ -4577,12 +4579,8 @@ async function init() {
             return;
         }
 
-        // Cards
-        filteredData.forEach((section, idx) => {
-            const card = document.createElement('div');
-            card.className = 'vertical-card';
-            card.style.animationDelay = `${idx * 0.04}s`;
-
+        // Cards — build all HTML at once (single paint, no reflow flashes)
+        const cardsHtml = filteredData.map((section, idx) => {
             const outletsHtml = section.outlets.map(o => `
                 <li class="outlet-item">
                     <div class="outlet-main">
@@ -4599,19 +4597,32 @@ async function init() {
                 </li>
             `).join('');
 
-            card.innerHTML = `
-                <div class="vertical-header" data-vertical="${section.vertical}">
-                    <span class="vertical-emoji">${section.emoji}</span>
-                    <h2>${section.vertical}</h2>
-                    <span class="outlet-count">${section.outlets.length}</span>
-                    <span class="collapse-icon">▾</span>
-                </div>
-                <div class="outlet-pane">
-                    <ul class="outlet-list">${outletsHtml}</ul>
+            return `
+                <div class="vertical-card">
+                    <div class="vertical-header" data-vertical="${section.vertical}">
+                        <span class="vertical-emoji">${section.emoji}</span>
+                        <h2>${section.vertical}</h2>
+                        <span class="outlet-count">${section.outlets.length}</span>
+                        <span class="collapse-icon">▾</span>
+                    </div>
+                    <div class="outlet-pane">
+                        <ul class="outlet-list">${outletsHtml}</ul>
+                    </div>
                 </div>
             `;
-            container.appendChild(card);
-        });
+        }).join('');
+
+        container.innerHTML = cardsHtml;
+
+        // First render: cards appear instantly (no fade-up blink).
+        // Subsequent renders: staggered fade-in entrance.
+        if (!isInitialRender) {
+            container.querySelectorAll('.vertical-card').forEach((card, i) => {
+                card.style.animationDelay = `${i * 0.04}s`;
+                card.classList.add('animate-in');
+            });
+        }
+        isInitialRender = false;
 
         // ===== Collapsible handlers — FLIP smooth animation =====
         function flipCollapse(card) {
