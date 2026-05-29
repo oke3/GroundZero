@@ -4605,15 +4605,31 @@ async function init() {
         });
     }
 
-    // ===== Tabs =====
-    tabsContainer.addEventListener('click', (e) => {
-        const tab = e.target.closest('.tab');
+    // ===== Tabs with URL hash routing =====
+    function selectTab(categoryId) {
+        const tab = tabsContainer.querySelector(`.tab[data-category="${categoryId}"]`);
         if (!tab) return;
         tabsContainer.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         tab.classList.add('active');
-        activeCategory = tab.dataset.category;
+        activeCategory = categoryId;
         render(searchInput.value);
+        history.replaceState(null, '', categoryId === 'all' ? '/' : '#' + categoryId);
+    }
+
+    tabsContainer.addEventListener('click', (e) => {
+        const tab = e.target.closest('.tab');
+        if (!tab) return;
+        selectTab(tab.dataset.category);
     });
+
+    // Restore category from URL hash
+    function restoreFromHash() {
+        const hash = location.hash.slice(1);
+        if (hash && categories.some(c => c.id === hash)) {
+            selectTab(hash);
+        }
+    }
+    window.addEventListener('hashchange', restoreFromHash);
 
     // ===== Typeahead =====
     searchInput.addEventListener('input', () => {
@@ -4693,9 +4709,72 @@ async function init() {
     });
 
     // ===== Scroll =====
+    const progressBar = document.getElementById('progressBar');
+    const categoryNav = document.querySelector('.category-nav');
+    let lastScrollY = 0;
+    let navHidden = false;
+    let scrollRAF = null;
+
     window.addEventListener('scroll', () => {
-        scrollBtn.classList.toggle('visible', window.scrollY > 400);
-        document.querySelector('.category-nav').classList.toggle('scrolled', window.scrollY > 100);
+        if (scrollRAF) return;
+        scrollRAF = requestAnimationFrame(() => {
+            scrollRAF = null;
+            const sy = window.scrollY;
+            const dh = document.documentElement.scrollHeight - window.innerHeight;
+
+            // Reading progress bar
+            progressBar.style.width = dh > 0 ? (sy / dh * 100) + '%' : '0%';
+
+            // Scroll-to-top button
+            scrollBtn.classList.toggle('visible', sy > 400);
+
+            // Nav shadow
+            categoryNav.classList.toggle('scrolled', sy > 100);
+
+            // Auto-hide nav on scroll down, show on up
+            if (sy > 200) {
+                if (sy > lastScrollY + 8 && !navHidden) {
+                    categoryNav.classList.add('hidden');
+                    navHidden = true;
+                } else if (sy < lastScrollY - 8 && navHidden) {
+                    categoryNav.classList.remove('hidden');
+                    navHidden = false;
+                }
+            } else {
+                categoryNav.classList.remove('hidden');
+                navHidden = false;
+            }
+            lastScrollY = sy;
+
+            // Scroll-sync tab highlighting (find closest card to top)
+            const cards = container.querySelectorAll('.vertical-card');
+            let closestCard = null;
+            let closestDist = Infinity;
+            cards.forEach(c => {
+                const rect = c.getBoundingClientRect();
+                const dist = Math.abs(rect.top - 120);
+                if (dist < closestDist) {
+                    closestDist = dist;
+                    closestCard = c;
+                }
+            });
+            if (closestCard) {
+                const hdr = closestCard.querySelector('.vertical-header');
+                if (hdr) {
+                    const v = hdr.dataset.vertical;
+                    const cat = verticalCategory[v];
+                    if (cat && cat !== activeCategory) {
+                        const tab = tabsContainer.querySelector(`.tab[data-category="${cat}"]`);
+                        if (tab) {
+                            tabsContainer.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                            tab.classList.add('active');
+                            activeCategory = cat;
+                            render(searchInput.value);
+                        }
+                    }
+                }
+            }
+        });
     });
     scrollBtn.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });

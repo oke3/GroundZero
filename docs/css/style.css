@@ -58,6 +58,19 @@ body {
     overflow-x: hidden;
 }
 
+/* ===== READING PROGRESS BAR ===== */
+.progress-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 2px;
+    width: 0%;
+    background: linear-gradient(90deg, var(--blue), var(--purple));
+    z-index: 500;
+    transition: width 0.1s linear;
+    pointer-events: none;
+}
+
 ::selection {
     background: rgba(59, 130, 246, 0.3);
     color: #fff;
@@ -368,14 +381,19 @@ body {
     background: rgba(8, 12, 20, 0.8);
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
-    transition: box-shadow 0.3s;
+    transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s;
     position: sticky;
     top: 0;
     z-index: 50;
+    will-change: transform;
 }
 
 .category-nav.scrolled {
     box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.category-nav.hidden {
+    transform: translateY(-100%);
 }
 
 #tabsContainer {
@@ -414,6 +432,24 @@ body {
 .tab.active {
     background: rgba(59, 130, 246, 0.12);
     color: var(--blue);
+    position: relative;
+}
+
+.tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0.5rem;
+    right: 0.5rem;
+    height: 2px;
+    background: var(--blue);
+    border-radius: 1px;
+    animation: tabSlideIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes tabSlideIn {
+    from { transform: scaleX(0); opacity: 0; }
+    to { transform: scaleX(1); opacity: 1; }
 }
 
 .tab .tab-emoji { font-size: 1rem; line-height: 1; }
@@ -555,8 +591,15 @@ body {
 }
 
 .vertical-card:hover {
-    border-color: rgba(59, 130, 246, 0.3);
-    box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(59, 130, 246, 0.05);
+    border-color: rgba(59, 130, 246, 0.35);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(59, 130, 246, 0.08);
+    animation: cardGlow 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes cardGlow {
+    0% { box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(59, 130, 246, 0.08), 0 0 20px rgba(59, 130, 246, 0.03); }
+    50% { box-shadow: 0 8px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(59, 130, 246, 0.15), 0 0 40px rgba(59, 130, 246, 0.08); }
+    100% { box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(59, 130, 246, 0.12), 0 0 25px rgba(139, 92, 246, 0.06); }
 }
 
 @keyframes fadeUp {
