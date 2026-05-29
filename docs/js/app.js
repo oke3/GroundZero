@@ -603,32 +603,57 @@ async function init() {
   }
 ];
 
+    const statsBar = document.getElementById('statsBar');
+    const scrollBtn = document.getElementById('scrollTopBtn');
+    let activeType = 'all';
+    let activeTier = 'all';
+
     function render(filter = '') {
-        container.innerHTML = '';
         const query = filter.toLowerCase();
+        const type = activeType;
+        const tier = activeTier;
 
         const filteredData = data.map(vertical => {
-            const filteredOutlets = vertical.outlets.filter(outlet => 
-                outlet.name.toLowerCase().includes(query) || 
-                vertical.vertical.toLowerCase().includes(query) ||
-                outlet.focus.toLowerCase().includes(query)
-            );
+            const filteredOutlets = vertical.outlets.filter(outlet => {
+                const matchesText = outlet.name.toLowerCase().includes(query) || 
+                    vertical.vertical.toLowerCase().includes(query) ||
+                    outlet.focus.toLowerCase().includes(query);
+                const matchesType = type === 'all' || outlet.type.toLowerCase() === type;
+                const matchesTier = tier === 'all' || outlet.tier.toLowerCase() === tier;
+                return matchesText && matchesType && matchesTier;
+            });
             return { ...vertical, outlets: filteredOutlets };
         }).filter(vertical => vertical.outlets.length > 0);
+
+        // Update stats
+        const totalOutlets = filteredData.reduce((sum, v) => sum + v.outlets.length, 0);
+        const websites = filteredData.reduce((sum, v) => sum + v.outlets.filter(o => o.type === 'Website').length, 0);
+        const newsletters = filteredData.reduce((sum, v) => sum + v.outlets.filter(o => o.type === 'Newsletter').length, 0);
+        const podcasts = filteredData.reduce((sum, v) => sum + v.outlets.filter(o => o.type === 'Podcast').length, 0);
+        statsBar.innerHTML = `
+            <span class="stat"><strong>${filteredData.length}</strong> Verticals</span>
+            <span class="stat-divider"></span>
+            <span class="stat"><strong>${totalOutlets}</strong> Outlets</span>
+            <span class="stat-detail"> &middot; ${websites} Websites &middot; ${newsletters} Newsletters &middot; ${podcasts} Podcasts</span>
+        `;
+
+        container.innerHTML = '';
 
         if (filteredData.length === 0) {
             container.innerHTML = '<div class="loading">No outlets found matching your search.</div>';
             return;
         }
 
-        filteredData.forEach(section => {
+        filteredData.forEach((section, index) => {
             const card = document.createElement('div');
             card.className = 'vertical-card';
+            card.style.animationDelay = `${index * 0.04}s`;
             
             card.innerHTML = `
                 <div class="vertical-header">
-                    <span>${section.emoji}</span>
+                    <span class="vertical-emoji">${section.emoji}</span>
                     <h2>${section.vertical}</h2>
+                    <span class="outlet-count">${section.outlets.length}</span>
                 </div>
                 <ul class="outlet-list">
                     ${section.outlets.map(outlet => `
@@ -637,7 +662,7 @@ async function init() {
                                 <a href="${outlet.url}" target="_blank" class="outlet-name">
                                     ${outlet.name} ${outlet.tier === 'Primary' ? '⭐' : ''}
                                 </a>
-                                <span class="outlet-type">${outlet.type}</span>
+                                <span class="outlet-type type-${outlet.type.toLowerCase()}">${outlet.type}</span>
                             </div>
                             <span class="outlet-focus">${outlet.focus}</span>
                         </li>
@@ -647,6 +672,44 @@ async function init() {
             container.appendChild(card);
         });
     }
+
+    // Filter pills
+    document.querySelectorAll('.filter-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+            const group = pill.dataset.group;
+            const value = pill.dataset.value;
+            document.querySelectorAll(`.filter-pill[data-group="${group}"]`).forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            if (group === 'type') activeType = value;
+            if (group === 'tier') activeTier = value;
+            render(searchInput.value);
+        });
+    });
+
+    // Scroll-to-top
+    window.addEventListener('scroll', () => {
+        scrollBtn.classList.toggle('visible', window.scrollY > 400);
+        document.querySelector('header').classList.toggle('scrolled', window.scrollY > 100);
+    });
+    scrollBtn.addEventListener('click', () => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+        if (e.key === '/' && e.target.tagName !== 'INPUT') {
+            e.preventDefault();
+            searchInput.focus();
+        }
+        if (e.key === 'Escape') {
+            searchInput.value = '';
+            activeType = 'all';
+            activeTier = 'all';
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.filter-pill[data-value="all"]').forEach(p => p.classList.add('active'));
+            render('');
+        }
+    });
 
     searchInput.addEventListener('input', (e) => render(e.target.value));
     render();

@@ -17,7 +17,23 @@
                 <p>The Definitive Tech News Map</p>
             </div>
             <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Search outlets, verticals, or keywords...">
+                <input type="text" id="searchInput" placeholder="Search outlets, verticals, or keywords..." autocomplete="off">
+            </div>
+            <div id="statsBar" class="stats-bar"></div>
+            <div class="filters">
+                <div class="filter-group">
+                    <span class="filter-label">Type:</span>
+                    <button class="filter-pill active" data-group="type" data-value="all">All</button>
+                    <button class="filter-pill" data-group="type" data-value="website">Websites</button>
+                    <button class="filter-pill" data-group="type" data-value="newsletter">Newsletters</button>
+                    <button class="filter-pill" data-group="type" data-value="podcast">Podcasts</button>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Tier:</span>
+                    <button class="filter-pill active" data-group="tier" data-value="all">All</button>
+                    <button class="filter-pill" data-group="tier" data-value="primary">Primary ⭐</button>
+                    <button class="filter-pill" data-group="tier" data-value="niche">Niche</button>
+                </div>
             </div>
         </div>
     </header>
@@ -28,6 +44,8 @@
             <div class="loading">Loading the map...</div>
         </div>
     </main>
+
+    <button id="scrollTopBtn" class="scroll-top" aria-label="Scroll to top">↑</button>
 
     <footer>
         <div class="container">
