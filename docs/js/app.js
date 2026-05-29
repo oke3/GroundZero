@@ -4438,8 +4438,6 @@ async function init() {
         searchInput.focus();
         updateClearBtn();
     });
-    // Update clear button on search input
-    const origInput = searchInput.addEventListener;
     searchInput.addEventListener('input', updateClearBtn);
 
     // ===== Toast helper =====

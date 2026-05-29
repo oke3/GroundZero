@@ -384,15 +384,6 @@ body {
     white-space: nowrap;
 }
 
-.typeahead-item .ta-type {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    font-weight: 700;
-    padding: 0.15rem 0.5rem;
-    border-radius: 0.3rem;
-    flex-shrink: 0;
-}
-
 /* ===== STATS BAR ===== */
 .stats-bar {
     display: flex;
@@ -771,7 +762,6 @@ body {
 
 .outlet-main {
     display: flex;
-    justify-content: space-between;
     align-items: center;
     gap: 0.5rem;
 }
@@ -783,9 +773,11 @@ body {
     font-size: 0.95rem;
     transition: color 0.2s;
     cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+    flex-shrink: 1;
 }
 
 .outlet-name:hover {
@@ -834,7 +826,8 @@ body {
     align-items: center;
     gap: 0.35rem;
     flex-shrink: 0;
-    margin-left: 0.35rem;
+    margin-left: auto;
+    min-width: 0;
 }
 
 .badge {
@@ -896,7 +889,8 @@ body {
     font-size: 0.55rem;
 }
 
-.badge--Secondary {
+.badge--Secondary,
+.badge--Niche {
     background: transparent;
     color: var(--text-muted);
     border: 1px solid var(--border);
@@ -908,7 +902,8 @@ body {
     border-color: rgba(37, 99, 235, 0.10);
 }
 
-[data-theme="light"] .badge--Secondary {
+[data-theme="light"] .badge--Secondary,
+[data-theme="light"] .badge--Niche {
     background: transparent;
     border-color: var(--border);
 }
@@ -1072,12 +1067,34 @@ footer {
 }
 
 /* ===== LOADING / EMPTY STATE ===== */
-.loading {
+.empty-state {
     grid-column: 1 / -1;
     text-align: center;
-    padding: 4rem 2rem;
+    padding: 5rem 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    line-height: 1;
+    opacity: 0.5;
+    margin-bottom: 0.25rem;
+}
+
+.empty-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text);
+    letter-spacing: -0.02em;
+}
+
+.empty-text {
+    font-size: 0.95rem;
     color: var(--text-dim);
-    font-size: 1.1rem;
+    max-width: 24rem;
 }
 
 /* ===== RESPONSIVE ===== */
