@@ -1,0 +1,27 @@
+# Git Ignore for GroundZero
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Local env/logs
+.env
+*.log
+logs/
+tmp/
+
+# OpenCode internal configs (if any)
+.opencode/kb/temp_*
