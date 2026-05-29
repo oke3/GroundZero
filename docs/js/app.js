@@ -2270,6 +2270,13 @@ async function init() {
         "tier": "Primary"
       },
       {
+        "name": "Telecom Analysis",
+        "url": "https://telecomanalysis.net/",
+        "focus": "In-depth telecom regulations, market shifts, and tech breakthroughs",
+        "type": "Website",
+        "tier": "Niche"
+      },
+      {
         "name": "Telecom TV",
         "url": "https://www.telecomtv.com/",
         "focus": "Telecom video news and analysis",
