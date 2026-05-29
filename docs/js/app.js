@@ -4529,6 +4529,34 @@ async function init() {
         tabsContainer.innerHTML = allTab + catTabs;
     }
 
+    // ===== Animate stats numbers =====
+    let animateStatsNumbers = (() => {
+        let rafId = null;
+        return function() {
+            if (rafId) cancelAnimationFrame(rafId);
+            const els = document.querySelectorAll('.stat-num');
+            rafId = requestAnimationFrame(() => {
+                rafId = null;
+                els.forEach(el => {
+                    const target = parseInt(el.dataset.target, 10);
+                    const current = parseInt(el.textContent, 10);
+                    if (current === target || isNaN(current)) { el.textContent = target; return; }
+                    const diff = target - current;
+                    const step = Math.ceil(Math.abs(diff) / 10) || 1;
+                    const dir = diff > 0 ? 1 : -1;
+                    const next = current + dir * step;
+                    if ((dir > 0 && next >= target) || (dir < 0 && next <= target)) {
+                        el.textContent = target;
+                    } else {
+                        el.textContent = next;
+                        // Re-trigger on next frame for smooth progression
+                        rafId = requestAnimationFrame(animateStatsNumbers);
+                    }
+                });
+            });
+        };
+    })();
+
     // ===== Render =====
     let isInitialRender = true;
 
@@ -4567,11 +4595,13 @@ async function init() {
         }
 
         statsBar.innerHTML = `
-            <span class="stat"><strong>${filteredData.length}</strong> Verticals</span>
+            <span class="stat"><strong class="stat-num" data-target="${filteredData.length}">${filteredData.length}</strong> Verticals</span>
             <span class="stat-divider"></span>
-            <span class="stat"><strong>${totalOutlets}</strong> Outlets</span>
+            <span class="stat"><strong class="stat-num" data-target="${totalOutlets}">${totalOutlets}</strong> Outlets</span>
             <span class="stat-detail"> &middot; ${websites} Websites &middot; ${newsletters} Newsletters &middot; ${podcasts} Podcasts</span>
         `;
+        // Animate numbers
+        animateStatsNumbers();
 
         container.innerHTML = '';
 
@@ -4805,12 +4835,36 @@ async function init() {
         `;
         surpriseModal.classList.add('visible');
         document.body.style.overflow = 'hidden';
+        // Focus first focusable element within the modal
+        const firstEl = surpriseModal.querySelector('button, a, input, [tabindex]');
+        if (firstEl) firstEl.focus();
+    });
+
+    // Focus trap inside modal
+    surpriseModal.addEventListener('keydown', (e) => {
+        if (e.key !== 'Tab') return;
+        const focusable = surpriseModal.querySelectorAll('button:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])');
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey) {
+            if (document.activeElement === first) {
+                e.preventDefault();
+                last.focus();
+            }
+        } else {
+            if (document.activeElement === last) {
+                e.preventDefault();
+                first.focus();
+            }
+        }
     });
 
     surpriseModal.addEventListener('click', (e) => {
         if (e.target === surpriseModal || e.target.closest('.modal-close')) {
             surpriseModal.classList.remove('visible');
             document.body.style.overflow = '';
+            surpriseBtn.focus();
         }
     });
 
@@ -4818,6 +4872,7 @@ async function init() {
         if (e.key === 'Escape' && surpriseModal.classList.contains('visible')) {
             surpriseModal.classList.remove('visible');
             document.body.style.overflow = '';
+            surpriseBtn.focus();
         }
     });
 
