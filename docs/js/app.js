@@ -1,4 +1,9 @@
 async function init() {
+    // Enable CSS transitions after first paint to prevent FOUC blink
+    requestAnimationFrame(() => {
+        document.documentElement.classList.add('transitions-ready');
+    });
+
     const searchInput = document.getElementById('searchInput');
     const container = document.getElementById('verticalsContainer');
 
