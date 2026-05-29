@@ -4369,10 +4369,7 @@ async function init() {
     const recentlyViewedEl = document.getElementById('recentlyViewed');
 
     // ===== State =====
-    let activeType = 'all';
-    let activeTier = 'all';
     let activeCategory = 'all';
-    let activeSort = 'default';
 
     // ===== Categories =====
     const categories = [
@@ -4427,23 +4424,6 @@ async function init() {
     themeToggle.addEventListener('click', () => {
         const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
         applyTheme(next);
-    });
-
-    // ===== Filter toggle (collapsible) =====
-    const filterToggle = document.getElementById('filterToggle');
-    const filterRow = document.getElementById('filterRow');
-    function applyFilterCollapse(collapsed) {
-        filterRow.classList.toggle('collapsed', collapsed);
-        filterToggle.classList.toggle('collapsed', collapsed);
-        filterToggle.innerHTML = collapsed
-            ? '<span class="toggle-arrow">▶</span> Filters'
-            : '<span class="toggle-arrow">▼</span> Filters';
-        localStorage.setItem('groundzero_filters_collapsed', collapsed);
-    }
-    const savedFilterCollapse = localStorage.getItem('groundzero_filters_collapsed') === 'true';
-    applyFilterCollapse(savedFilterCollapse);
-    filterToggle.addEventListener('click', () => {
-        applyFilterCollapse(!filterRow.classList.contains('collapsed'));
     });
 
     // ===== Toast helper =====
@@ -4514,37 +4494,6 @@ async function init() {
         }
     });
 
-    // ===== Export =====
-    document.getElementById('exportBtn').addEventListener('click', () => {
-        const query = searchInput.value.trim().toLowerCase();
-        const type = activeType;
-        const tier = activeTier;
-        const cat = activeCategory;
-        const exportData = data.map(vertical => {
-            const filteredOutlets = vertical.outlets.filter(outlet => {
-                const matchesText = !query ||
-                    outlet.name.toLowerCase().includes(query) ||
-                    vertical.vertical.toLowerCase().includes(query) ||
-                    outlet.focus.toLowerCase().includes(query);
-                const matchesType = type === 'all' || outlet.type.toLowerCase() === type;
-                const matchesTier = tier === 'all' || outlet.tier.toLowerCase() === tier;
-                const matchesCat = cat === 'all' || verticalCategory[vertical.vertical] === cat;
-                return matchesText && matchesType && matchesTier && matchesCat;
-            });
-            return { ...vertical, outlets: filteredOutlets };
-        }).filter(v => v.outlets.length > 0);
-        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `groundzero-export-${new Date().toISOString().slice(0,10)}.json`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast('Exported filtered data as JSON');
-    });
-
     // ===== Render tabs =====
     function renderTabs() {
         const allTab = `<button class="tab active" data-category="all">All</button>`;
@@ -4557,8 +4506,6 @@ async function init() {
     // ===== Render =====
     function render(filter) {
         const query = (filter || '').toLowerCase();
-        const type = activeType;
-        const tier = activeTier;
         const cat = activeCategory;
 
         // Remove skeleton
@@ -4571,20 +4518,11 @@ async function init() {
                     outlet.name.toLowerCase().includes(query) ||
                     vertical.vertical.toLowerCase().includes(query) ||
                     outlet.focus.toLowerCase().includes(query);
-                const matchesType = type === 'all' || outlet.type.toLowerCase() === type;
-                const matchesTier = tier === 'all' || outlet.tier.toLowerCase() === tier;
                 const matchesCat = cat === 'all' || verticalCategory[vertical.vertical] === cat;
-                return matchesText && matchesType && matchesTier && matchesCat;
+                return matchesText && matchesCat;
             });
             return { ...vertical, outlets: filteredOutlets };
         }).filter(vertical => vertical.outlets.length > 0);
-
-        // Sort
-        if (activeSort === 'alpha') {
-            filteredData.sort((a, b) => a.vertical.localeCompare(b.vertical));
-        } else if (activeSort === 'count') {
-            filteredData.sort((a, b) => b.outlets.length - a.outlets.length);
-        }
 
         // Stats
         const totalOutlets = filteredData.reduce((s, v) => s + v.outlets.length, 0);
@@ -4675,20 +4613,6 @@ async function init() {
         tab.classList.add('active');
         activeCategory = tab.dataset.category;
         render(searchInput.value);
-    });
-
-    // ===== Filter pills =====
-    document.querySelectorAll('.filter-pill').forEach(pill => {
-        pill.addEventListener('click', () => {
-            const group = pill.dataset.group;
-            const value = pill.dataset.value;
-            document.querySelectorAll(`.filter-pill[data-group="${group}"]`).forEach(p => p.classList.remove('active'));
-            pill.classList.add('active');
-            if (group === 'type') activeType = value;
-            if (group === 'tier') activeTier = value;
-            if (group === 'sort') activeSort = value;
-            render(searchInput.value);
-        });
     });
 
     // ===== Typeahead =====
@@ -4785,10 +4709,6 @@ async function init() {
         }
         if (e.key === 'Escape' && !surpriseModal.classList.contains('visible')) {
             searchInput.value = '';
-            activeType = 'all';
-            activeTier = 'all';
-            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.filter-pill[data-value="all"]').forEach(p => p.classList.add('active'));
             render('');
         }
     });
