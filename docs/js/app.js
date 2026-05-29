@@ -603,33 +603,108 @@ async function init() {
   }
 ];
 
+    // ===== DOM refs =====
     const statsBar = document.getElementById('statsBar');
     const scrollBtn = document.getElementById('scrollTopBtn');
+    const tabsContainer = document.getElementById('tabsContainer');
+    const typeahead = document.getElementById('typeahead');
+    const surpriseModal = document.getElementById('surpriseModal');
+    const toast = document.getElementById('toast');
+    const footerStats = document.getElementById('footerStats');
+
+    // ===== State =====
     let activeType = 'all';
     let activeTier = 'all';
+    let activeCategory = 'all';
 
-    function render(filter = '') {
-        const query = filter.toLowerCase();
+    // ===== Categories =====
+    const categories = [
+        { id: 'ai-infra', label: 'AI & Infrastructure', emoji: '⚙️' },
+        { id: 'security', label: 'Security & Data', emoji: '🛡️' },
+        { id: 'consumer', label: 'Consumer & Design', emoji: '🎨' },
+        { id: 'science', label: 'Science & Sustainability', emoji: '🌿' },
+        { id: 'business', label: 'Business & Finance', emoji: '💰' },
+        { id: 'policy', label: 'Policy & Society', emoji: '📜' },
+    ];
+
+    const verticalCategory = {
+        "Artificial Intelligence": "ai-infra", "Cloud Computing": "ai-infra",
+        "Software Engineering": "ai-infra", "DevOps & SRE": "ai-infra",
+        "Open Source": "ai-infra", "API Economy": "ai-infra",
+        "Cybersecurity": "security", "Data Science & Analytics": "security",
+        "Quantum Computing": "security", "Semiconductors & Hardware": "security",
+        "Telecommunications & 5G": "security", "IoT & Edge Computing": "security",
+        "Consumer Electronics": "consumer", "Gaming & XR": "consumer",
+        "Design & UX": "consumer", "No Code & Low Code": "consumer",
+        "Biotech": "science", "HealthTech": "science",
+        "Science & Research": "science", "SpaceTech": "science",
+        "CleanTech & Energy": "science", "FoodTech & AgriTech": "science",
+        "Robotics & Automation": "science",
+        "FinTech": "business", "Venture Capital & Startups": "business",
+        "Enterprise SaaS": "business", "MarTech & AdTech": "business",
+        "InsurTech & LegalTech": "business", "HRTech & Future of Work": "business",
+        "PropTech": "business",
+        "Tech Policy & Law": "policy", "GovTech & RegTech": "policy",
+        "Tech Careers & Culture": "policy", "Web3 & Blockchain": "policy",
+        "EdTech": "policy", "Automotive Tech & EVs": "policy",
+    };
+
+    // ===== Globals =====
+    const totalVerticals = data.length;
+    const allOutlets = data.flatMap(v => v.outlets.map(o => ({ ...o, vertical: v.vertical, emoji: v.emoji })));
+    const totalOutletsAll = allOutlets.length;
+    const websitesAll = allOutlets.filter(o => o.type === 'Website').length;
+    const newslettersAll = allOutlets.filter(o => o.type === 'Newsletter').length;
+    const podcastsAll = allOutlets.filter(o => o.type === 'Podcast').length;
+    footerStats.textContent = `${totalVerticals} Verticals · ${totalOutletsAll} Outlets · ${websitesAll} Websites · ${newslettersAll} Newsletters · ${podcastsAll} Podcasts`;
+
+    // ===== Toast helper =====
+    function showToast(msg) {
+        toast.textContent = msg;
+        toast.classList.add('visible');
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => toast.classList.remove('visible'), 2500);
+    }
+
+    // ===== Render tabs =====
+    function renderTabs() {
+        const allTab = `<button class="tab active" data-category="all">All</button>`;
+        const catTabs = categories.map(c =>
+            `<button class="tab" data-category="${c.id}"><span class="tab-emoji">${c.emoji}</span> ${c.label}</button>`
+        ).join('');
+        tabsContainer.innerHTML = allTab + catTabs;
+    }
+
+    // ===== Render =====
+    function render(filter) {
+        const query = (filter || '').toLowerCase();
         const type = activeType;
         const tier = activeTier;
+        const cat = activeCategory;
 
+        // Remove skeleton
+        document.querySelectorAll('.skeleton-card').forEach(s => s.remove());
+
+        // Filter
         const filteredData = data.map(vertical => {
             const filteredOutlets = vertical.outlets.filter(outlet => {
-                const matchesText = outlet.name.toLowerCase().includes(query) || 
+                const matchesText = !query ||
+                    outlet.name.toLowerCase().includes(query) ||
                     vertical.vertical.toLowerCase().includes(query) ||
                     outlet.focus.toLowerCase().includes(query);
                 const matchesType = type === 'all' || outlet.type.toLowerCase() === type;
                 const matchesTier = tier === 'all' || outlet.tier.toLowerCase() === tier;
-                return matchesText && matchesType && matchesTier;
+                const matchesCat = cat === 'all' || verticalCategory[vertical.vertical] === cat;
+                return matchesText && matchesType && matchesTier && matchesCat;
             });
             return { ...vertical, outlets: filteredOutlets };
         }).filter(vertical => vertical.outlets.length > 0);
 
-        // Update stats
-        const totalOutlets = filteredData.reduce((sum, v) => sum + v.outlets.length, 0);
-        const websites = filteredData.reduce((sum, v) => sum + v.outlets.filter(o => o.type === 'Website').length, 0);
-        const newsletters = filteredData.reduce((sum, v) => sum + v.outlets.filter(o => o.type === 'Newsletter').length, 0);
-        const podcasts = filteredData.reduce((sum, v) => sum + v.outlets.filter(o => o.type === 'Podcast').length, 0);
+        // Stats
+        const totalOutlets = filteredData.reduce((s, v) => s + v.outlets.length, 0);
+        const websites = filteredData.reduce((s, v) => s + v.outlets.filter(o => o.type === 'Website').length, 0);
+        const newsletters = filteredData.reduce((s, v) => s + v.outlets.filter(o => o.type === 'Newsletter').length, 0);
+        const podcasts = filteredData.reduce((s, v) => s + v.outlets.filter(o => o.type === 'Podcast').length, 0);
         statsBar.innerHTML = `
             <span class="stat"><strong>${filteredData.length}</strong> Verticals</span>
             <span class="stat-divider"></span>
@@ -640,40 +715,83 @@ async function init() {
         container.innerHTML = '';
 
         if (filteredData.length === 0) {
-            container.innerHTML = '<div class="loading">No outlets found matching your search.</div>';
+            container.innerHTML = '<div class="loading">No outlets match your filters.</div>';
             return;
         }
 
-        filteredData.forEach((section, index) => {
+        // Cards
+        filteredData.forEach((section, idx) => {
             const card = document.createElement('div');
             card.className = 'vertical-card';
-            card.style.animationDelay = `${index * 0.04}s`;
-            
+            card.style.animationDelay = `${idx * 0.04}s`;
+
+            const outletsHtml = section.outlets.map(o => `
+                <li class="outlet-item">
+                    <div class="outlet-main">
+                        <span class="outlet-name" data-url="${o.url}" data-name="${o.name}">
+                            ${o.name} ${o.tier === 'Primary' ? '⭐' : ''}
+                            <span class="copy-hint">Copy</span>
+                        </span>
+                        <span class="outlet-type type-${o.type.toLowerCase()}">${o.type}</span>
+                    </div>
+                    <span class="outlet-focus">${o.focus}</span>
+                </li>
+            `).join('');
+
             card.innerHTML = `
-                <div class="vertical-header">
+                <div class="vertical-header" data-vertical="${section.vertical}">
                     <span class="vertical-emoji">${section.emoji}</span>
                     <h2>${section.vertical}</h2>
                     <span class="outlet-count">${section.outlets.length}</span>
+                    <span class="collapse-icon">▾</span>
                 </div>
-                <ul class="outlet-list">
-                    ${section.outlets.map(outlet => `
-                        <li class="outlet-item">
-                            <div class="outlet-main">
-                                <a href="${outlet.url}" target="_blank" class="outlet-name">
-                                    ${outlet.name} ${outlet.tier === 'Primary' ? '⭐' : ''}
-                                </a>
-                                <span class="outlet-type type-${outlet.type.toLowerCase()}">${outlet.type}</span>
-                            </div>
-                            <span class="outlet-focus">${outlet.focus}</span>
-                        </li>
-                    `).join('')}
-                </ul>
+                <div class="outlet-list-wrapper">
+                    <ul class="outlet-list">${outletsHtml}</ul>
+                </div>
             `;
             container.appendChild(card);
         });
+
+        // Collapsible handlers
+        container.querySelectorAll('.vertical-header').forEach(hdr => {
+            hdr.addEventListener('click', () => {
+                hdr.closest('.vertical-card').classList.toggle('collapsed');
+            });
+        });
+
+        // Copy-to-clipboard handlers
+        container.querySelectorAll('.outlet-name').forEach(el => {
+            el.addEventListener('click', (e) => {
+                e.preventDefault();
+                const url = el.dataset.url;
+                const name = el.dataset.name;
+                navigator.clipboard.writeText(url).then(() => {
+                    showToast(`Copied ${name}`);
+                }).catch(() => {
+                    // Fallback
+                    const ta = document.createElement('textarea');
+                    ta.value = url;
+                    document.body.appendChild(ta);
+                    ta.select();
+                    document.execCommand('copy');
+                    document.body.removeChild(ta);
+                    showToast(`Copied ${name}`);
+                });
+            });
+        });
     }
 
-    // Filter pills
+    // ===== Tabs =====
+    tabsContainer.addEventListener('click', (e) => {
+        const tab = e.target.closest('.tab');
+        if (!tab) return;
+        tabsContainer.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        activeCategory = tab.dataset.category;
+        render(searchInput.value);
+    });
+
+    // ===== Filter pills =====
     document.querySelectorAll('.filter-pill').forEach(pill => {
         pill.addEventListener('click', () => {
             const group = pill.dataset.group;
@@ -686,22 +804,99 @@ async function init() {
         });
     });
 
-    // Scroll-to-top
+    // ===== Typeahead =====
+    searchInput.addEventListener('input', () => {
+        const q = searchInput.value.trim().toLowerCase();
+        if (!q || q.length < 1) { typeahead.classList.remove('visible'); return; }
+
+        const matches = [];
+        for (const v of data) {
+            for (const o of v.outlets) {
+                if (o.name.toLowerCase().includes(q) || o.focus.toLowerCase().includes(q)) {
+                    matches.push({ ...o, vertical: v.vertical });
+                    if (matches.length >= 8) break;
+                }
+            }
+            if (matches.length >= 8) break;
+        }
+
+        if (matches.length === 0) { typeahead.classList.remove('visible'); return; }
+
+        typeahead.innerHTML = matches.map(m => `
+            <div class="typeahead-item" data-name="${m.name}" data-url="${m.url}">
+                <span class="ta-name">${highlight(m.name, q)}</span>
+                <span class="outlet-type type-${m.type.toLowerCase()}">${m.type}</span>
+                <span class="ta-vertical">${m.vertical}</span>
+            </div>
+        `).join('');
+        typeahead.classList.add('visible');
+    });
+
+    function highlight(text, query) {
+        const idx = text.toLowerCase().indexOf(query);
+        if (idx === -1) return text;
+        return text.slice(0, idx) + '<strong>' + text.slice(idx, idx + query.length) + '</strong>' + text.slice(idx + query.length);
+    }
+
+    typeahead.addEventListener('click', (e) => {
+        const item = e.target.closest('.typeahead-item');
+        if (!item) return;
+        const url = item.dataset.url;
+        const name = item.dataset.name;
+        searchInput.value = name;
+        typeahead.classList.remove('visible');
+        render(name);
+        showToast(`Jumped to ${name}`);
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.search-row')) typeahead.classList.remove('visible');
+    });
+
+    // ===== Surprise me =====
+    document.getElementById('surpriseBtn').addEventListener('click', () => {
+        const pick = allOutlets[Math.floor(Math.random() * allOutlets.length)];
+        surpriseModal.querySelector('.modal-content').innerHTML = `
+            <span class="modal-emoji">${pick.emoji}</span>
+            <div class="modal-vertical">${pick.vertical}</div>
+            <div class="modal-name">${pick.name}</div>
+            <div class="modal-focus">${pick.focus}</div>
+            <a href="${pick.url}" target="_blank" class="modal-link" rel="noopener">Visit ${pick.name} →</a>
+        `;
+        surpriseModal.classList.add('visible');
+        document.body.style.overflow = 'hidden';
+    });
+
+    surpriseModal.addEventListener('click', (e) => {
+        if (e.target === surpriseModal || e.target.closest('.modal-close')) {
+            surpriseModal.classList.remove('visible');
+            document.body.style.overflow = '';
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && surpriseModal.classList.contains('visible')) {
+            surpriseModal.classList.remove('visible');
+            document.body.style.overflow = '';
+        }
+    });
+
+    // ===== Scroll =====
     window.addEventListener('scroll', () => {
         scrollBtn.classList.toggle('visible', window.scrollY > 400);
-        document.querySelector('header').classList.toggle('scrolled', window.scrollY > 100);
+        document.querySelector('.category-nav').classList.toggle('scrolled', window.scrollY > 100);
     });
     scrollBtn.addEventListener('click', () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
-    // Keyboard shortcuts
+    // ===== Keyboard =====
     document.addEventListener('keydown', (e) => {
         if (e.key === '/' && e.target.tagName !== 'INPUT') {
             e.preventDefault();
             searchInput.focus();
         }
-        if (e.key === 'Escape') {
+        if (e.key === 'Escape' && !surpriseModal.classList.contains('visible')) {
             searchInput.value = '';
             activeType = 'all';
             activeTier = 'all';
@@ -711,8 +906,9 @@ async function init() {
         }
     });
 
-    searchInput.addEventListener('input', (e) => render(e.target.value));
-    render();
+    // ===== Init =====
+    renderTabs();
+    render('');
 }
 
 init();
