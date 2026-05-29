@@ -4452,6 +4452,16 @@ async function init() {
     });
     searchInput.addEventListener('input', updateClearBtn);
 
+    // ===== Debounced search-as-you-type =====
+    let searchTimer = null;
+    searchInput.addEventListener('input', () => {
+        if (searchTimer) clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+            searchTimer = null;
+            render(searchInput.value);
+        }, 180);
+    });
+
     // ===== Toast helper =====
     function showToast(msg) {
         toast.textContent = msg;
@@ -4560,6 +4570,23 @@ async function init() {
     // ===== Render =====
     let isInitialRender = true;
 
+    function scoreRelevance(outlet, verticalName, query) {
+        if (!query) return 0;
+        const lcName = outlet.name.toLowerCase();
+        const lcFocus = outlet.focus.toLowerCase();
+        const lcVert = verticalName.toLowerCase();
+        let score = 0;
+        // Name match (highest priority)
+        if (lcName === query) score += 100;
+        else if (lcName.startsWith(query)) score += 80;
+        else if (lcName.includes(query)) score += 60;
+        // Focus match
+        if (lcFocus.includes(query)) score += 30;
+        // Vertical match
+        if (lcVert.includes(query)) score += 15;
+        return score;
+    }
+
     function render(filter) {
         const query = (filter || '').toLowerCase();
         const cat = activeCategory;
@@ -4567,17 +4594,24 @@ async function init() {
         // Remove skeleton
         document.querySelectorAll('.skeleton-card').forEach(s => s.remove());
 
-        // Filter
+        // Filter + score
         const filteredData = data.map(vertical => {
-            const filteredOutlets = vertical.outlets.filter(outlet => {
-                const matchesText = !query ||
-                    outlet.name.toLowerCase().includes(query) ||
-                    vertical.vertical.toLowerCase().includes(query) ||
-                    outlet.focus.toLowerCase().includes(query);
-                const matchesCat = cat === 'all' || verticalCategory[vertical.vertical] === cat;
-                return matchesText && matchesCat;
-            });
-            return { ...vertical, outlets: filteredOutlets };
+            const scored = vertical.outlets
+                .filter(outlet => {
+                    const matchesText = !query ||
+                        outlet.name.toLowerCase().includes(query) ||
+                        vertical.vertical.toLowerCase().includes(query) ||
+                        outlet.focus.toLowerCase().includes(query);
+                    const matchesCat = cat === 'all' || verticalCategory[vertical.vertical] === cat;
+                    return matchesText && matchesCat;
+                })
+                .map(outlet => ({
+                    ...outlet,
+                    _score: scoreRelevance(outlet, vertical.vertical, query)
+                }));
+            // Sort by relevance descending (higher score first)
+            if (query) scored.sort((a, b) => b._score - a._score || a.name.localeCompare(b.name));
+            return { ...vertical, outlets: scored };
         }).filter(vertical => vertical.outlets.length > 0);
 
         // Stats
@@ -4610,7 +4644,10 @@ async function init() {
                 <div class="empty-state">
                     <div class="empty-icon">🔍</div>
                     <div class="empty-title">No outlets found</div>
-                    <div class="empty-text">${query ? 'Try a different search term' : 'Try selecting a different category'}</div>
+                    <div class="empty-text">${query
+                        ? 'Try a different spelling or a broader term'
+                        : 'Try selecting a different category'}</div>
+                    ${query ? `<div class="empty-text" style="margin-top:0.25rem;font-size:0.85rem;opacity:0.6">Search by outlet name, topic, or vertical</div>` : ''}
                 </div>
             `;
             return;
@@ -4622,7 +4659,7 @@ async function init() {
                 <li class="outlet-item">
                     <div class="outlet-main">
                         <a href="${o.url}" target="_blank" rel="noopener" class="outlet-name" data-name="${o.name}">
-                            ${o.name}
+                            ${highlight(o.name, query)}
                         </a>
                         <span class="outlet-badges">
                             <span class="badge badge--${o.type}">${o.type}</span>
@@ -4630,7 +4667,7 @@ async function init() {
                         </span>
                         <button class="copy-btn" data-url="${o.url}" data-name="${o.name}" aria-label="Copy ${o.name} URL" title="Copy URL">📋</button>
                     </div>
-                    <span class="outlet-focus">${o.focus}</span>
+                    <span class="outlet-focus">${highlight(o.focus, query)}</span>
                 </li>
             `).join('');
 
@@ -4811,13 +4848,42 @@ async function init() {
     typeahead.addEventListener('click', (e) => {
         const item = e.target.closest('.typeahead-item');
         if (!item) return;
-        const url = item.dataset.url;
+        selectTypeaheadItem(item);
+    });
+
+    // Keyboard navigation for typeahead
+    searchInput.addEventListener('keydown', (e) => {
+        if (!typeahead.classList.contains('visible')) return;
+        const items = typeahead.querySelectorAll('.typeahead-item');
+        if (items.length === 0) return;
+        let active = typeahead.querySelector('.highlighted');
+        let idx = active ? Array.from(items).indexOf(active) : -1;
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            idx = Math.min(idx + 1, items.length - 1);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            idx = Math.max(idx - 1, 0);
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            if (active) { selectTypeaheadItem(active); }
+            return;
+        } else {
+            return;
+        }
+        items.forEach(el => el.classList.remove('highlighted'));
+        items[idx].classList.add('highlighted');
+        items[idx].scrollIntoView({ block: 'nearest' });
+    });
+
+    function selectTypeaheadItem(item) {
         const name = item.dataset.name;
+        const url = item.dataset.url;
         searchInput.value = name;
         typeahead.classList.remove('visible');
         render(name);
         showToast(`Jumped to ${name}`);
-    });
+    }
 
     document.addEventListener('click', (e) => {
         if (!e.target.closest('.search-row')) typeahead.classList.remove('visible');
