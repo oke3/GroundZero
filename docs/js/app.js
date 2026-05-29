@@ -4576,10 +4576,66 @@ async function init() {
             container.appendChild(card);
         });
 
-        // Collapsible handlers
+        // ===== Collapsible handlers — FLIP smooth animation =====
+        function flipCollapse(card) {
+            // Prevent interrupting an in-progress animation
+            if (card.style.height && card.style.height !== '' && card.style.height !== 'auto') return;
+
+            // First: measure current height
+            const first = card.getBoundingClientRect().height;
+
+            // Toggle collapsed state
+            const isExpanding = card.classList.contains('collapsed');
+            card.classList.toggle('collapsed');
+
+            // Animate outlet items
+            const items = card.querySelectorAll('.outlet-item');
+            items.forEach(item => {
+                item.style.animation = 'none';
+                item.style.opacity = '';
+            });
+            // Force reflow to clear previous animations
+            void card.offsetHeight;
+
+            if (!card.classList.contains('collapsed')) {
+                // Expanding: stagger fade-in outlets
+                items.forEach((item, i) => {
+                    item.style.animation = `fadeUp 0.45s cubic-bezier(0.22, 1, 0.36, 1) ${i * 0.035}s both`;
+                });
+            } else {
+                // Collapsing: quick fade-out
+                items.forEach((item, i) => {
+                    item.style.animation = `fadeOut 0.15s ease ${i * 0.01}s both`;
+                });
+            }
+
+            // Last: measure new height
+            const last = card.getBoundingClientRect().height;
+
+            // No change → nothing to animate
+            if (Math.abs(first - last) < 1) return;
+
+            // Invert: pin to old height
+            card.style.height = first + 'px';
+            // Force reflow so the browser registers the starting height
+            void card.offsetHeight;
+
+            // Play: animate to new height
+            card.style.height = last + 'px';
+
+            // Clean up after transition completes
+            const onEnd = () => {
+                card.style.height = '';
+                card.removeEventListener('transitionend', onEnd);
+                card.removeEventListener('transitioncancel', onEnd);
+            };
+            card.addEventListener('transitionend', onEnd);
+            card.addEventListener('transitioncancel', onEnd);
+        }
+
         container.querySelectorAll('.vertical-header').forEach(hdr => {
             hdr.addEventListener('click', () => {
-                hdr.closest('.vertical-card').classList.toggle('collapsed');
+                flipCollapse(hdr.closest('.vertical-card'));
             });
         });
 

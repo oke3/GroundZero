@@ -585,9 +585,10 @@ body {
     -webkit-backdrop-filter: blur(12px);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+    transition: height 0.5s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.35s ease, box-shadow 0.35s ease, opacity 0.35s ease;
     animation: fadeUp 0.5s ease both;
     overflow: hidden;
+    will-change: height;
 }
 
 .vertical-card:hover {
@@ -605,6 +606,11 @@ body {
 @keyframes fadeUp {
     from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeOut {
+    from { opacity: 1; transform: translateY(0); }
+    to { opacity: 0; transform: translateY(-8px); }
 }
 
 /* ===== VERTICAL HEADER (collapsible) ===== */
@@ -679,7 +685,6 @@ body {
     background: rgba(0, 0, 0, 0.15);
     border-top: 1px solid var(--border);
     overflow: hidden;
-    transition: max-height 0.4s cubic-bezier(0.22, 1, 0.36, 1);
     max-height: 3000px;
 }
 
