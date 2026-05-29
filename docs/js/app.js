@@ -4886,6 +4886,13 @@ async function init() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
+    // ===== Tab overflow detection =====
+    function updateTabOverflow() {
+        const el = document.querySelector('.tabs-scroll');
+        if (el) el.classList.toggle('is-overflowing', el.scrollWidth > el.clientWidth);
+    }
+    window.addEventListener('resize', updateTabOverflow);
+
     // ===== Keyboard =====
     document.addEventListener('keydown', (e) => {
         if (e.key === '/' && e.target.tagName !== 'INPUT') {
@@ -4901,6 +4908,7 @@ async function init() {
 
     // ===== Init =====
     renderTabs();
+    updateTabOverflow();
     render('');
     renderRecentlyViewed();
 }

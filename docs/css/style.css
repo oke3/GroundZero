@@ -449,6 +449,9 @@ body {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+}
+
+.tabs-scroll.is-overflowing {
     cursor: grab;
     mask-image: linear-gradient(to right, transparent 4px, #000 1.25rem, #000 calc(100% - 1.25rem), transparent 4px);
     -webkit-mask-image: linear-gradient(to right, transparent 4px, #000 1.25rem, #000 calc(100% - 1.25rem), transparent 4px);
@@ -1109,6 +1112,14 @@ footer {
 }
 
 /* ===== RESPONSIVE ===== */
+/* ===== WIDER DESKTOP ===== */
+@media (min-width: 1400px) {
+    .container { max-width: 1360px; }
+    .verticals-grid {
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    }
+}
+
 @media (max-width: 900px) {
     .verticals-grid {
         grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
