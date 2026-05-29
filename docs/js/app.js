@@ -3,8 +3,8 @@ async function init() {
     const container = document.getElementById('verticalsContainer');
 
     try {
-        // Fetch the data from the root directory
-        const response = await fetch('../data/directory.json');
+        // Fetch the data from the data folder within the docs directory
+        const response = await fetch('data/directory.json');
         if (!response.ok) throw new Error('Could not fetch directory data');
         const data = await response.json();
 
