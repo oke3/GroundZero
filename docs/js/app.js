@@ -4429,6 +4429,23 @@ async function init() {
         applyTheme(next);
     });
 
+    // ===== Filter toggle (collapsible) =====
+    const filterToggle = document.getElementById('filterToggle');
+    const filterRow = document.getElementById('filterRow');
+    function applyFilterCollapse(collapsed) {
+        filterRow.classList.toggle('collapsed', collapsed);
+        filterToggle.classList.toggle('collapsed', collapsed);
+        filterToggle.innerHTML = collapsed
+            ? '<span class="toggle-arrow">▶</span> Filters'
+            : '<span class="toggle-arrow">▼</span> Filters';
+        localStorage.setItem('groundzero_filters_collapsed', collapsed);
+    }
+    const savedFilterCollapse = localStorage.getItem('groundzero_filters_collapsed') === 'true';
+    applyFilterCollapse(savedFilterCollapse);
+    filterToggle.addEventListener('click', () => {
+        applyFilterCollapse(!filterRow.classList.contains('collapsed'));
+    });
+
     // ===== Toast helper =====
     function showToast(msg) {
         toast.textContent = msg;
@@ -4614,7 +4631,7 @@ async function init() {
                     <span class="outlet-count">${section.outlets.length}</span>
                     <span class="collapse-icon">▾</span>
                 </div>
-                <div class="outlet-list-wrapper">
+                <div class="outlet-pane">
                     <ul class="outlet-list">${outletsHtml}</ul>
                 </div>
             `;
