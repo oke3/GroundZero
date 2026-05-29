@@ -272,13 +272,14 @@ async function init() {
         "type": "Website",
         "tier": "Niche"
       },
-      {
-        "name, "Kotaku",
-        "url": "https://kotaku.com/",
-        "focus": "Gaming culture and industry commentary",
-        "type": "Website",
-        "tier": "Primary"
-      }
+                      {
+                        "name": "Kotaku",
+                        "url": "https://kotaku.com/",
+                        "focus": "Gaming culture and industry commentary",
+                        "type": "Website",
+                        "tier": "Primary"
+                      }
+
     ]
   },
   {
