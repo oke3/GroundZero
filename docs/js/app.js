@@ -4377,7 +4377,6 @@ async function init() {
     const typeahead = document.getElementById('typeahead');
     const surpriseModal = document.getElementById('surpriseModal');
     const toast = document.getElementById('toast');
-    const footerStats = document.getElementById('footerStats');
     const recentlyViewedEl = document.getElementById('recentlyViewed');
 
     // ===== State =====
@@ -4422,7 +4421,6 @@ async function init() {
     const websitesAll = allOutlets.filter(o => o.type === 'Website').length;
     const newslettersAll = allOutlets.filter(o => o.type === 'Newsletter').length;
     const podcastsAll = allOutlets.filter(o => o.type === 'Podcast').length;
-    footerStats.textContent = `${totalVerticals} Verticals · ${totalOutletsAll} Outlets · ${websitesAll} Websites · ${newslettersAll} Newsletters · ${podcastsAll} Podcasts`;
 
     // ===== Theme toggle =====
     const themeToggle = document.getElementById('themeToggle');
