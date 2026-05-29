@@ -4366,11 +4366,13 @@ async function init() {
     const surpriseModal = document.getElementById('surpriseModal');
     const toast = document.getElementById('toast');
     const footerStats = document.getElementById('footerStats');
+    const recentlyViewedEl = document.getElementById('recentlyViewed');
 
     // ===== State =====
     let activeType = 'all';
     let activeTier = 'all';
     let activeCategory = 'all';
+    let activeSort = 'default';
 
     // ===== Categories =====
     const categories = [
@@ -4413,6 +4415,20 @@ async function init() {
     const podcastsAll = allOutlets.filter(o => o.type === 'Podcast').length;
     footerStats.textContent = `${totalVerticals} Verticals · ${totalOutletsAll} Outlets · ${websitesAll} Websites · ${newslettersAll} Newsletters · ${podcastsAll} Podcasts`;
 
+    // ===== Theme toggle =====
+    const themeToggle = document.getElementById('themeToggle');
+    function applyTheme(theme) {
+        document.documentElement.dataset.theme = theme;
+        themeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
+        localStorage.setItem('theme', theme);
+    }
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    applyTheme(savedTheme);
+    themeToggle.addEventListener('click', () => {
+        const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+        applyTheme(next);
+    });
+
     // ===== Toast helper =====
     function showToast(msg) {
         toast.textContent = msg;
@@ -4420,6 +4436,97 @@ async function init() {
         clearTimeout(toast._timer);
         toast._timer = setTimeout(() => toast.classList.remove('visible'), 2500);
     }
+
+    // ===== Recently viewed =====
+    function getRecentlyViewed() {
+        try { return JSON.parse(localStorage.getItem('groundzero_recent') || '[]'); }
+        catch { return []; }
+    }
+    function addRecentlyViewed(name, url, vertical, emoji) {
+        let recent = getRecentlyViewed();
+        recent = recent.filter(r => r.url !== url);
+        recent.unshift({ name, url, vertical, emoji, ts: Date.now() });
+        if (recent.length > 10) recent = recent.slice(0, 10);
+        localStorage.setItem('groundzero_recent', JSON.stringify(recent));
+        renderRecentlyViewed();
+    }
+    function renderRecentlyViewed() {
+        const recent = getRecentlyViewed();
+        if (recent.length === 0) {
+            recentlyViewedEl.innerHTML = '';
+            recentlyViewedEl.classList.remove('visible');
+            return;
+        }
+        recentlyViewedEl.classList.add('visible');
+        recentlyViewedEl.innerHTML = `
+            <div class="recent-header">
+                <span class="recent-label">Recently Viewed</span>
+                <button class="recent-clear" id="clearRecent" aria-label="Clear recently viewed">Clear</button>
+            </div>
+            <div class="recent-items">
+                ${recent.slice(0, 5).map(r => `
+                    <a href="${r.url}" target="_blank" rel="noopener" class="recent-item" title="${r.vertical}">
+                        <span class="recent-emoji">${r.emoji}</span>
+                        <span class="recent-name">${r.name}</span>
+                    </a>
+                `).join('')}
+            </div>
+        `;
+        const clearBtn = document.getElementById('clearRecent');
+        if (clearBtn) clearBtn.addEventListener('click', () => {
+            localStorage.removeItem('groundzero_recent');
+            renderRecentlyViewed();
+        });
+    }
+
+    // Track outlet clicks for recently viewed
+    document.addEventListener('click', (e) => {
+        const link = e.target.closest('.outlet-name');
+        if (link) {
+            const name = link.dataset.name;
+            const href = link.getAttribute('href');
+            const card = link.closest('.vertical-card');
+            let vertical = '';
+            let emoji = '';
+            if (card) {
+                const hdr = card.querySelector('.vertical-header');
+                vertical = hdr ? hdr.dataset.vertical : '';
+                emoji = card.querySelector('.vertical-emoji')?.textContent || '';
+            }
+            if (name && href) addRecentlyViewed(name, href, vertical, emoji);
+        }
+    });
+
+    // ===== Export =====
+    document.getElementById('exportBtn').addEventListener('click', () => {
+        const query = searchInput.value.trim().toLowerCase();
+        const type = activeType;
+        const tier = activeTier;
+        const cat = activeCategory;
+        const exportData = data.map(vertical => {
+            const filteredOutlets = vertical.outlets.filter(outlet => {
+                const matchesText = !query ||
+                    outlet.name.toLowerCase().includes(query) ||
+                    vertical.vertical.toLowerCase().includes(query) ||
+                    outlet.focus.toLowerCase().includes(query);
+                const matchesType = type === 'all' || outlet.type.toLowerCase() === type;
+                const matchesTier = tier === 'all' || outlet.tier.toLowerCase() === tier;
+                const matchesCat = cat === 'all' || verticalCategory[vertical.vertical] === cat;
+                return matchesText && matchesType && matchesTier && matchesCat;
+            });
+            return { ...vertical, outlets: filteredOutlets };
+        }).filter(v => v.outlets.length > 0);
+        const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `groundzero-export-${new Date().toISOString().slice(0,10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('Exported filtered data as JSON');
+    });
 
     // ===== Render tabs =====
     function renderTabs() {
@@ -4455,6 +4562,13 @@ async function init() {
             return { ...vertical, outlets: filteredOutlets };
         }).filter(vertical => vertical.outlets.length > 0);
 
+        // Sort
+        if (activeSort === 'alpha') {
+            filteredData.sort((a, b) => a.vertical.localeCompare(b.vertical));
+        } else if (activeSort === 'count') {
+            filteredData.sort((a, b) => b.outlets.length - a.outlets.length);
+        }
+
         // Stats
         const totalOutlets = filteredData.reduce((s, v) => s + v.outlets.length, 0);
         const websites = filteredData.reduce((s, v) => s + v.outlets.filter(o => o.type === 'Website').length, 0);
@@ -4483,10 +4597,10 @@ async function init() {
             const outletsHtml = section.outlets.map(o => `
                 <li class="outlet-item">
                     <div class="outlet-main">
-                        <span class="outlet-name" data-url="${o.url}" data-name="${o.name}">
+                        <a href="${o.url}" target="_blank" rel="noopener" class="outlet-name" data-name="${o.name}">
                             ${o.name} ${o.tier === 'Primary' ? '⭐' : ''}
-                            <span class="copy-hint">Copy</span>
-                        </span>
+                        </a>
+                        <button class="copy-btn" data-url="${o.url}" data-name="${o.name}" aria-label="Copy ${o.name} URL" title="Copy URL">📋</button>
                         <span class="outlet-type type-${o.type.toLowerCase()}">${o.type}</span>
                     </div>
                     <span class="outlet-focus">${o.focus}</span>
@@ -4515,9 +4629,9 @@ async function init() {
         });
 
         // Copy-to-clipboard handlers
-        container.querySelectorAll('.outlet-name').forEach(el => {
+        container.querySelectorAll('.copy-btn').forEach(el => {
             el.addEventListener('click', (e) => {
-                e.preventDefault();
+                e.stopPropagation();
                 const url = el.dataset.url;
                 const name = el.dataset.name;
                 navigator.clipboard.writeText(url).then(() => {
@@ -4555,6 +4669,7 @@ async function init() {
             pill.classList.add('active');
             if (group === 'type') activeType = value;
             if (group === 'tier') activeTier = value;
+            if (group === 'sort') activeSort = value;
             render(searchInput.value);
         });
     });
@@ -4664,6 +4779,7 @@ async function init() {
     // ===== Init =====
     renderTabs();
     render('');
+    renderRecentlyViewed();
 }
 
 init();

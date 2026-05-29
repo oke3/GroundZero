@@ -15,6 +15,29 @@
     --radius-sm: 0.5rem;
     --container: 1120px;
     --header-h: 0px; /* set by JS */
+    --toast-bg: var(--surface);
+    --toggle-emoji: '🌙';
+}
+
+[data-theme="light"] {
+    --bg: #f4f6fa;
+    --surface: rgba(255, 255, 255, 0.85);
+    --surface-hover: rgba(240, 243, 249, 0.95);
+    --text: #1a1e2e;
+    --text-dim: #5a6480;
+    --text-muted: #8a94aa;
+    --blue: #2563eb;
+    --blue-glow: rgba(37, 99, 235, 0.15);
+    --green: #059669;
+    --purple: #7c3aed;
+    --border: rgba(200, 208, 220, 0.6);
+    --toast-bg: rgba(255, 255, 255, 0.95);
+    --toggle-emoji: '☀️';
+}
+
+/* Smooth theme transition */
+*, *::before, *::after {
+    transition: background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease, color 0.2s ease;
 }
 
 /* ===== RESET ===== */
@@ -221,6 +244,30 @@ body {
     box-shadow: 0 0 16px rgba(139, 92, 246, 0.2);
 }
 
+/* ===== THEME TOGGLE ===== */
+.theme-toggle {
+    width: 2.5rem;
+    height: 2.5rem;
+    border: none;
+    border-radius: 50%;
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--text);
+    font-size: 1.15rem;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    margin-left: 0.35rem;
+}
+
+.theme-toggle:hover {
+    background: rgba(59, 130, 246, 0.2);
+    transform: scale(1.1);
+    box-shadow: 0 0 16px var(--blue-glow);
+}
+
 /* ===== TYPEAHEAD ===== */
 .typeahead {
     position: absolute;
@@ -421,6 +468,112 @@ body {
     box-shadow: 0 0 12px var(--blue-glow);
 }
 
+/* ===== EXPORT BUTTON ===== */
+.export-btn {
+    padding: 0.4rem 1rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-family: inherit;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 2rem;
+    color: var(--green);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.export-btn:hover {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: var(--green);
+    box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+}
+
+/* ===== RECENTLY VIEWED ===== */
+.recently-viewed {
+    margin-bottom: 1rem;
+    opacity: 0;
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.recently-viewed.visible {
+    opacity: 1;
+    max-height: 200px;
+}
+
+.recent-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+}
+
+.recent-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.recent-clear {
+    background: none;
+    border: none;
+    font-size: 0.75rem;
+    color: var(--text-dim);
+    cursor: pointer;
+    font-family: inherit;
+    padding: 0.1rem 0.4rem;
+    border-radius: 0.3rem;
+    transition: all 0.2s;
+}
+
+.recent-clear:hover {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.recent-items {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.recent-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.7rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 2rem;
+    text-decoration: none;
+    color: var(--text-dim);
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.recent-item:hover {
+    border-color: var(--blue);
+    color: var(--blue);
+    background: var(--surface-hover);
+}
+
+.recent-emoji {
+    font-size: 0.85rem;
+    line-height: 1;
+}
+
+.recent-name {
+    max-width: 140px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* ===== VERTICALS GRID ===== */
 .verticals-grid {
     display: grid;
@@ -575,18 +728,35 @@ body {
 
 .outlet-name:hover {
     color: var(--blue);
+    text-decoration: underline;
 }
 
-.outlet-name .copy-hint {
-    font-size: 0.7rem;
+.outlet-name:visited {
+    color: var(--purple);
+}
+
+/* ===== COPY BUTTON ===== */
+.copy-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    padding: 0.15rem 0.3rem;
+    border-radius: 0.3rem;
     opacity: 0;
-    transition: opacity 0.2s;
+    transition: opacity 0.2s, background 0.2s;
     color: var(--text-muted);
-    font-weight: 400;
+    line-height: 1;
+    flex-shrink: 0;
 }
 
-.outlet-name:hover .copy-hint {
-    opacity: 1;
+.outlet-item:hover .copy-btn {
+    opacity: 0.7;
+}
+
+.copy-btn:hover {
+    opacity: 1 !important;
+    background: rgba(59, 130, 246, 0.1);
 }
 
 .outlet-focus {

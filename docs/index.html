@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GroundZero | The Definitive Tech News Map</title>
-    <meta name="description" content="Curated directory of 382 top tech news outlets across 36 verticals.">
+    <meta name="description" content="Curated directory of 591 top tech news outlets across 36 verticals.">
     <link rel="stylesheet" href="css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -25,8 +25,9 @@
                 <div class="search-row">
                     <div class="search-wrapper">
                         <span class="search-icon">⌕</span>
-                        <input type="text" id="searchInput" placeholder="Search 382 outlets across 36 verticals..." autocomplete="off" aria-label="Search outlets">
+                        <input type="text" id="searchInput" placeholder="Search 591 outlets across 36 verticals..." autocomplete="off" aria-label="Search outlets">
                         <button id="surpriseBtn" class="surprise-btn" title="Surprise me" aria-label="Random outlet">🎲</button>
+                        <button id="themeToggle" class="theme-toggle" title="Toggle theme" aria-label="Toggle theme">🌙</button>
                     </div>
                     <div id="typeahead" class="typeahead"></div>
                 </div>
@@ -36,6 +37,31 @@
         <nav class="category-nav" id="categoryNav" aria-label="Browse by category">
             <div class="container" id="tabsContainer"></div>
         </nav>
+        <div class="container">
+            <div class="filters" id="filterRow">
+                <div class="filter-group">
+                    <span class="filter-label">Type</span>
+                    <button class="filter-pill active" data-group="type" data-value="all">All</button>
+                    <button class="filter-pill" data-group="type" data-value="website">Website</button>
+                    <button class="filter-pill" data-group="type" data-value="newsletter">Newsletter</button>
+                    <button class="filter-pill" data-group="type" data-value="podcast">Podcast</button>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Tier</span>
+                    <button class="filter-pill active" data-group="tier" data-value="all">All</button>
+                    <button class="filter-pill" data-group="tier" data-value="primary">Primary</button>
+                    <button class="filter-pill" data-group="tier" data-value="niche">Niche</button>
+                </div>
+                <div class="filter-group">
+                    <span class="filter-label">Sort</span>
+                    <button class="filter-pill active" data-group="sort" data-value="default">Default</button>
+                    <button class="filter-pill" data-group="sort" data-value="alpha">A-Z</button>
+                    <button class="filter-pill" data-group="sort" data-value="count">By Count</button>
+                </div>
+                <button id="exportBtn" class="export-btn" title="Export filtered data" aria-label="Export filtered data">⬇ Export</button>
+            </div>
+            <div id="recentlyViewed" class="recently-viewed"></div>
+        </div>
     </header>
 
     <main class="container" id="main">

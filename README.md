@@ -1,10 +1,18 @@
-# 🌍 GroundZero: Technology News Reference Directory
+# GroundZero: Technology News Reference Directory
 
-GroundZero is a curated, community-driven reference directory designed to be the definitive guide for tracking technology news across various verticals. 
+Curated, community-driven directory of **591 top tech news outlets** across **36 verticals** — the definitive guide to tracking technology news.
 
-## 🚀 Explore the Directory
-Check out our interactive, searchable map of the tech news ecosystem:
-👉 **[GroundZero Interactive Directory](https://oke3.github.io/GroundZero/)**
+## Interactive Directory
+**[groundzero.tech](https://oke3.github.io/GroundZero/)** — Search, filter, sort, and explore the full tech news map with dark/light mode, recently viewed tracking, and export capabilities.
 
-## 🎯 Mission
-In an era of information overload, GroundZero aims to provide a structured, noise-free map of the most reliable and influential news outlets in the technology landscape. Whether you are a developer, a security researcher, or a tech enthusiast, this directory helps you find the right source for the right vertical.
+## Features
+- **591 outlets** across 36 verticals, from AI to Robotics
+- Type filters (Website / Newsletter / Podcast)
+- Tier sorting (Primary / Niche)
+- Category tabs (AI & Infra, Security & Data, Consumer & Design, Science & Sustainability, Business & Finance, Policy & Society)
+- Real-time search with typeahead
+- Dark / Light theme toggle
+- Recently viewed tracker
+- Export filtered data as JSON
+- Surprise Me random outlet picker
+- Copy-to-clipboard with toast notifications
