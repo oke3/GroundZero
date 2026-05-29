@@ -27,16 +27,20 @@
                     <div class="search-wrapper">
                         <span class="search-icon">⌕</span>
                         <input type="text" id="searchInput" placeholder="Search 591 outlets across 36 verticals..." autocomplete="off" aria-label="Search outlets">
+                        <button id="clearSearch" class="clear-search" aria-label="Clear search">✕</button>
                         <button id="surpriseBtn" class="surprise-btn" title="Surprise me" aria-label="Random outlet">🎲</button>
                         <button id="themeToggle" class="theme-toggle" title="Toggle theme" aria-label="Toggle theme">🌙</button>
                     </div>
                     <div id="typeahead" class="typeahead"></div>
+                    <div id="searchCount" class="search-count"></div>
                 </div>
                 <div id="statsBar" class="stats-bar"></div>
             </div>
         </div>
         <nav class="category-nav" id="categoryNav" aria-label="Browse by category">
-            <div class="container" id="tabsContainer"></div>
+            <div class="container">
+                <div class="tabs-scroll" id="tabsContainer"></div>
+            </div>
         </nav>
         <div class="container">
             <div id="recentlyViewed" class="recently-viewed"></div>

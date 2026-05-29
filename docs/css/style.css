@@ -235,6 +235,54 @@ body {
 #searchInput::-webkit-search-decoration,
 #searchInput::-webkit-search-cancel-button { display: none; }
 
+/* ===== CLEAR SEARCH ===== */
+.clear-search {
+    width: 1.8rem;
+    height: 1.8rem;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.06);
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s ease;
+    line-height: 1;
+    margin-right: 0.15rem;
+}
+
+.clear-search.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.clear-search:hover {
+    background: rgba(255,255,255,0.12);
+    color: var(--text);
+}
+
+[data-theme="light"] .clear-search {
+    background: rgba(0,0,0,0.04);
+}
+[data-theme="light"] .clear-search:hover {
+    background: rgba(0,0,0,0.1);
+}
+
+/* ===== SEARCH COUNT ===== */
+.search-count {
+    font-size: 0.78rem;
+    color: var(--text-dim);
+    padding: 0.35rem 0 0 0.2rem;
+    min-height: 1.4rem;
+    transition: opacity 0.25s ease;
+}
+.search-count:empty { opacity: 0; }
+
 .surprise-btn {
     width: 2.5rem;
     height: 2.5rem;
@@ -396,16 +444,21 @@ body {
     transform: translateY(-100%);
 }
 
-#tabsContainer {
+.tabs-scroll {
     display: flex;
     gap: 0.25rem;
     padding: 0.6rem 1.75rem;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    cursor: grab;
+    mask-image: linear-gradient(to right, transparent 4px, #000 1.25rem, #000 calc(100% - 1.25rem), transparent 4px);
+    -webkit-mask-image: linear-gradient(to right, transparent 4px, #000 1.25rem, #000 calc(100% - 1.25rem), transparent 4px);
 }
 
-#tabsContainer::-webkit-scrollbar { display: none; }
+.tabs-scroll:active { cursor: grabbing; }
+
+.tabs-scroll::-webkit-scrollbar { display: none; }
 
 .tab {
     display: flex;
@@ -775,33 +828,89 @@ body {
     margin-top: 0.2rem;
 }
 
-/* ===== TYPE BADGES ===== */
-.outlet-type {
-    font-size: 0.65rem;
-    text-transform: uppercase;
-    background: var(--border);
-    color: var(--text-dim);
-    padding: 0.15rem 0.55rem;
-    border-radius: 0.35rem;
-    font-weight: 700;
-    letter-spacing: 0.3px;
-    white-space: nowrap;
+/* ===== METADATA BADGES ===== */
+.outlet-badges {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
     flex-shrink: 0;
+    margin-left: 0.35rem;
 }
 
-.type-website {
+.badge {
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    padding: 0.15rem 0.5rem;
+    border-radius: 2rem;
+    white-space: nowrap;
+    line-height: 1.3;
+}
+
+.badge--Website {
     background: rgba(59, 130, 246, 0.12);
     color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.15);
 }
 
-.type-newsletter {
+.badge--Newsletter {
     background: rgba(16, 185, 129, 0.12);
     color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.15);
 }
 
-.type-podcast {
+.badge--Podcast {
     background: rgba(168, 85, 247, 0.12);
     color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.15);
+}
+
+.badge--Blog {
+    background: rgba(251, 146, 60, 0.12);
+    color: #fb923c;
+    border: 1px solid rgba(251, 146, 60, 0.15);
+}
+
+.badge--Community {
+    background: rgba(52, 211, 153, 0.10);
+    color: #6ee7b7;
+    border: 1px solid rgba(52, 211, 153, 0.12);
+}
+
+.badge--YouTube {
+    background: rgba(248, 113, 113, 0.12);
+    color: #f87171;
+    border: 1px solid rgba(248, 113, 113, 0.15);
+}
+
+.badge--Journal {
+    background: rgba(147, 197, 253, 0.10);
+    color: #93c5fd;
+    border: 1px solid rgba(147, 197, 253, 0.12);
+}
+
+.badge--Primary {
+    background: rgba(59, 130, 246, 0.06);
+    color: var(--text-muted);
+    border: 1px solid rgba(59, 130, 246, 0.08);
+    font-size: 0.55rem;
+}
+
+.badge--Secondary {
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--border);
+    font-size: 0.55rem;
+}
+
+[data-theme="light"] .badge--Primary {
+    background: rgba(37, 99, 235, 0.05);
+    border-color: rgba(37, 99, 235, 0.10);
+}
+
+[data-theme="light"] .badge--Secondary {
+    background: transparent;
+    border-color: var(--border);
 }
 
 /* ===== SURPRISE MODAL ===== */

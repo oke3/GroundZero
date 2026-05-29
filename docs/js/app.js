@@ -4426,6 +4426,22 @@ async function init() {
         applyTheme(next);
     });
 
+    // ===== Clear search =====
+    const clearSearch = document.getElementById('clearSearch');
+    function updateClearBtn() {
+        clearSearch.classList.toggle('visible', searchInput.value.length > 0);
+    }
+    clearSearch.addEventListener('click', () => {
+        searchInput.value = '';
+        typeahead.classList.remove('visible');
+        render('');
+        searchInput.focus();
+        updateClearBtn();
+    });
+    // Update clear button on search input
+    const origInput = searchInput.addEventListener;
+    searchInput.addEventListener('input', updateClearBtn);
+
     // ===== Toast helper =====
     function showToast(msg) {
         toast.textContent = msg;
@@ -4529,6 +4545,15 @@ async function init() {
         const websites = filteredData.reduce((s, v) => s + v.outlets.filter(o => o.type === 'Website').length, 0);
         const newsletters = filteredData.reduce((s, v) => s + v.outlets.filter(o => o.type === 'Newsletter').length, 0);
         const podcasts = filteredData.reduce((s, v) => s + v.outlets.filter(o => o.type === 'Podcast').length, 0);
+
+        // Search count
+        const searchCountEl = document.getElementById('searchCount');
+        if (query) {
+            searchCountEl.textContent = `Showing ${totalOutlets} of ${allOutlets.length} outlets`;
+        } else {
+            searchCountEl.textContent = '';
+        }
+
         statsBar.innerHTML = `
             <span class="stat"><strong>${filteredData.length}</strong> Verticals</span>
             <span class="stat-divider"></span>
@@ -4539,7 +4564,13 @@ async function init() {
         container.innerHTML = '';
 
         if (filteredData.length === 0) {
-            container.innerHTML = '<div class="loading">No outlets match your filters.</div>';
+            container.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-icon">🔍</div>
+                    <div class="empty-title">No outlets found</div>
+                    <div class="empty-text">${query ? 'Try a different search term' : 'Try selecting a different category'}</div>
+                </div>
+            `;
             return;
         }
 
@@ -4553,10 +4584,13 @@ async function init() {
                 <li class="outlet-item">
                     <div class="outlet-main">
                         <a href="${o.url}" target="_blank" rel="noopener" class="outlet-name" data-name="${o.name}">
-                            ${o.name} ${o.tier === 'Primary' ? '⭐' : ''}
+                            ${o.name}
                         </a>
+                        <span class="outlet-badges">
+                            <span class="badge badge--${o.type}">${o.type}</span>
+                            <span class="badge badge--${o.tier}">${o.tier}</span>
+                        </span>
                         <button class="copy-btn" data-url="${o.url}" data-name="${o.name}" aria-label="Copy ${o.name} URL" title="Copy URL">📋</button>
-                        <span class="outlet-type type-${o.type.toLowerCase()}">${o.type}</span>
                     </div>
                     <span class="outlet-focus">${o.focus}</span>
                 </li>
@@ -4670,6 +4704,8 @@ async function init() {
         activeCategory = categoryId;
         render(searchInput.value);
         history.replaceState(null, '', categoryId === 'all' ? '/' : '#' + categoryId);
+        // Smooth scroll to top of main content
+        document.getElementById('main').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     tabsContainer.addEventListener('click', (e) => {
@@ -4708,7 +4744,7 @@ async function init() {
         typeahead.innerHTML = matches.map(m => `
             <div class="typeahead-item" data-name="${m.name}" data-url="${m.url}">
                 <span class="ta-name">${highlight(m.name, q)}</span>
-                <span class="outlet-type type-${m.type.toLowerCase()}">${m.type}</span>
+                <span class="badge badge--${m.type}">${m.type}</span>
                 <span class="ta-vertical">${m.vertical}</span>
             </div>
         `).join('');
@@ -4844,6 +4880,7 @@ async function init() {
         }
         if (e.key === 'Escape' && !surpriseModal.classList.contains('visible')) {
             searchInput.value = '';
+            updateClearBtn();
             render('');
         }
     });
