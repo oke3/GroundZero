@@ -1,7 +1,7 @@
 # GroundZero
 ### Intelligence. Curation. Density.
 
-![GroundZero Intelligence Map](https://oke3.github.io/GroundZero/og-image.svg)
+![GroundZero Intelligence Map](docs/og-image.svg)
 
 **The definitive signal-to-noise filter for the technology frontier.**
 
